@@ -11,6 +11,70 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
 {
     public class FSObjectsController : ApiController
     {
+        protected List<FileSystemObject> GetInfo(string rootPath)
+        {
+            var dirsAndFiles = new List<FileSystemObject>();
+
+            if (Directory.Exists(rootPath))
+            {
+                DirectoryInfo[] dirs = new DirectoryInfo(rootPath).GetDirectories();
+                FileInfo[] files = new DirectoryInfo(rootPath).GetFiles();
+
+                foreach (DirectoryInfo dir in dirs)
+                {
+                    try
+                    {
+                        
+                        string[] filesPathes = Directory.GetFiles(dir.FullName, "*.*", SearchOption.AllDirectories);
+
+                        List<FileInfo> containedFiles = new List<FileInfo>();
+
+                        // LIST OF ALL FILES CONTAINED IN DIR WITH SUB-DIRS
+                        foreach (string filePath in filesPathes) containedFiles.Add(new FileInfo(filePath));
+
+                        dirsAndFiles.Add(new FileSystemObject
+                        {
+                            Name = dir.Name,
+                            ParentPath = rootPath,
+                            IsDirectory = true,
+                            FilesLess10 = (from f in containedFiles where f.Length <= (10 * 1024 * 1024) select f).Count(),
+                            NotMore50 = (from f in containedFiles
+                                         where (f.Length > (10 * 1024 * 1024) && f.Length <= (50 * 1024 * 1024))
+                                         select f).Count(),
+                            MoreThan100 = (from f in containedFiles where f.Length >= (100 * 1024 * 1024) select f).Count(),
+                        });
+                    }
+                    catch (Exception)
+                    {
+                        // TODO :
+                        // POSSIBLE ACCESS IS DENIED.
+                        // LOG THIS AND PROCCESS NEXT...
+                    }
+                }
+
+                foreach (FileInfo file in files)
+                {
+                    dirsAndFiles.Add(new FileSystemObject
+                    {
+                        Name = file.Name,
+                        ParentPath = rootPath,
+                        IsDirectory = false,
+                        FilesLess10 = file.Length <= (10 * 1024 * 1024) ? 1 : 0,
+                        NotMore50 = (file.Length > (10 * 1024 * 1024) &&
+                        file.Length <= (50 * 1024 * 1024)) ? 1 : 0,
+                        MoreThan100 = file.Length >= (100 * 1024 * 1024) ? 1 : 0
+                    });
+                }
+            }
+
+            if (dirsAndFiles.Count < 1)
+            {
+                dirsAndFiles.Add(new FileSystemObject { Name = "Drive is not available or empty!" });
+            }
+
+            return dirsAndFiles;
+        }
+
         // GET api/values
         public IEnumerable<string> Get()
         {
@@ -39,66 +103,50 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
         [Route("api/FSObjects/{drv}")]
         public IEnumerable<FileSystemObject> GetFromDrive(char drv)
         {
-            var dirsAndFiles = new List<FileSystemObject>();
+            return GetInfo(drv + ":\\");
+        }
 
-            string driveRoot = drv + ":\\";
 
-            if (Directory.Exists(driveRoot))
-            {
-                DirectoryInfo[] dirs = new DirectoryInfo(driveRoot).GetDirectories();
-                FileInfo[] files = new DirectoryInfo(driveRoot).GetFiles();
+        [HttpPost]
+        [Route("api/FSObjects/{drv}/SubDirs")]
+        public IEnumerable<FileSystemObject> SubDirs([FromBody]FileSystemObject dirObj)
+        {
+            return GetInfo(dirObj.ParentPath + "\\" + dirObj.Name); //
 
-                foreach (DirectoryInfo dir in dirs)
-                {
-                    try
-                    {
-                        string[] filesPathes = Directory.GetFiles(dir.FullName, "*.*", SearchOption.AllDirectories);
+            // string rootDir = dirObj.;
 
-                        List<FileInfo> containedFiles = new List<FileInfo>();
+            //if (Directory.Exists(rootDir))
+            //{
+            //    DirectoryInfo[] dirs = new DirectoryInfo(rootDir).GetDirectories();
+            //    FileInfo[] files = new DirectoryInfo(rootDir).GetFiles();
 
-                        // LIST OF ALL FILES CONTAINED IN DIR WITH SUB-DIRS
-                        foreach (string filePath in filesPathes) containedFiles.Add(new FileInfo(filePath));
+            //    foreach (DirectoryInfo dir in dirs)
+            //    {
+            //        dirsAndFiles.Add(new FileSystemObject
+            //        {
+            //            Name = dir.Name,
+            //            IsDirectory = true,
+            //            FullPath = dir.FullName
+            //        });
+            //    }
+            //    foreach (FileInfo file in files)
+            //    {
+            //        dirsAndFiles.Add(new FileSystemObject
+            //        {
+            //            Name = file.Name,
+            //            IsDirectory = false,
+            //            FileSize = file.Length,
+            //            FullPath = Path.GetPathRoot(file.FullName) // .FullName
+            //        });
+            //    }
+            //}
 
-                        dirsAndFiles.Add(new FileSystemObject
-                        {
-                            Name = dir.Name,
-                            ParentPath = Path.GetPathRoot(dir.FullName),
-                            IsDirectory = true,
-                            FilesLess10 = (from f in containedFiles where f.Length <= (10 * 1024 * 1024) select f).Count(),
-                            NotMore50 = (from f in containedFiles
-                                         where (f.Length > (10 * 1024 * 1024) && f.Length <= (50 * 1024 * 1024))
-                                         select f).Count(),
-                            MoreThan100 = (from f in containedFiles where f.Length >= (100 * 1024 * 1024) select f).Count(),
-                        });
-                    }
-                    catch (Exception)
-                    {
-                        // TODO :
-                        // POSSIBLE ACCESS IS DENIED.
-                        // LOG THIS AND PROCCESS NEXT...
-                    }
-                }
-                foreach (FileInfo file in files)
-                {
-                    dirsAndFiles.Add(new FileSystemObject
-                    {
-                        Name = file.Name,
-                        ParentPath = Path.GetPathRoot(file.FullName),
-                        IsDirectory = false,
-                        FilesLess10 = file.Length <= (10 * 1024 * 1024) ? 1 : 0,
-                        NotMore50 = (file.Length > (10 * 1024 * 1024) &&
-                        file.Length <= (50 * 1024 * 1024)) ? 1 : 0,
-                        MoreThan100 = file.Length >= (100 * 1024 * 1024) ? 1 : 0
-                    });
-                }
-            }
+            //if (dirsAndFiles.Count < 1)
+            //{
+            //    dirsAndFiles.Add(new FileSystemObject { Name = "Drive is not available or empty! " + rootDir });
+            //}
 
-            if (dirsAndFiles.Count < 1)
-            {
-                dirsAndFiles.Add(new FileSystemObject { Name = "Drive is not available or empty!" });
-            }
-
-            return dirsAndFiles;
+            // return dirsAndFiles;
         }
     }
 }
