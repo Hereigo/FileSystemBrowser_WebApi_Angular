@@ -10,5 +10,181 @@
         <hr />
         <a href="../api/FSObjects/t">api/FSObjects/t</a>
         <hr />
+
+
+        <h2><a href="/home">File System Browser :</a></h2>
+
+        <div ng-app="FSBrowser">
+            <div ng-controller="FSBControl">
+
+                <table ng-if="fsDirs != null" id="sizesTbl">
+                    <tr>
+                        <th>Less 10 MB</th>
+                        <th>10 MB - 50 MB</th>
+                        <th>More 100 MB</th>
+                    </tr>
+                    <tr>
+                        <td>{{ lessThanTen }}</td>
+                        <td>{{ notMoreFifty }}</td>
+                        <td>{{ moreHandred }}</td>
+                    </tr>
+                </table>
+
+                <h5>{{currentPath}}</h5>
+
+                <p>
+                    @* DRIVES VIEW : *@
+                    <ul ng-repeat="drive in fsDrives">
+                        <li class="drvLi">
+                            <button class="drvBtn" ng-click="driveClick(fsDrives[$index])"> {{drive}} </button>
+                        </li>
+                    </ul>
+
+                    @* DIRECTORIES VIEW : *@
+                    <div ng-if="parentPath.length > 2">
+                        <b>
+                            <a ng-click="parentClick(parentPath)"> ... </a>
+                        </b>
+                    </div>
+                    <br />
+                    <ul ng-repeat="dir in fsDirs">
+                        <li>
+                            <span ng-if="dir.IsDirectory==true">
+                                <a ng-click="dirsClick(fsDirs[$index])">
+                                    {{dir.Name}}
+                                    {{dir.ParentPath}}
+                                     - DIR -
+                                    {{dir.FilesLess10}}
+                                    {{dir.NotMore50}}
+                                    {{dir.MoreThan100}}
+                                </a>
+                            </span>
+                            <span ng-if="dir.IsDirectory==false">
+                                {{dir.Name}}
+                                {{dir.ParentPath}}
+                                 - file -
+                                {{dir.FilesLess10}}
+                                {{dir.NotMore50}}
+                                {{dir.MoreThan100}}
+                            </span>
+                        </li>
+                    </ul>
+                </p>
+
+            </div>
+        </div>
+
     </div>
 </div>
+
+
+<script>
+
+    var app;
+    (function () {
+        app = angular.module('FSBrowser', []);
+    })();
+
+
+    app.service('FSBService', function ($http) {
+
+        this.getFSDrives = function () {
+            return $http.get("/api/FSObjects");
+        };
+
+
+        this.getDirsForDrive = function (drvLetter) {
+            return $http.get("/api/FSObjects/" + drvLetter);
+        };
+
+
+        this.getSubDirsFor = function (dir) {
+            return $http.post("/api/FSObjects/" +
+                dir.FullPath.substring(0, 1) + "/SubDirs", dir);
+        };
+
+    });
+
+
+    app.controller('FSBControl', function ($scope, FSBService) {
+
+        getDrives();
+
+        function getDrives() {
+            var getDrivesList = FSBService.getFSDrives();
+            getDrivesList.then(function (d) {
+                $scope.fsDrives = d.data;
+                $scope.fsDirs = null;
+            }, function (error) {
+                console.log('Something is wrong with getting data from API');
+            });
+        };
+
+
+        $scope.driveClick = function (drive) {
+            var getDriveInfo = FSBService.getDirsForDrive(drive.substring(0, 1));
+            getDriveInfo.then(function (d) {
+                $scope.fsDirs = d.data;
+                $scope.fsDrives = null;
+                $scope.currentPath = "Current path: " + drive;
+                countFilesBySize();
+            }, function (error) {
+                console.log('Something is wrong with getting data from API');
+            });
+        };
+
+
+        $scope.parentClick = function (parentPath) {
+
+            var dir = { FullPath: parentPath };
+
+            var getDirInfo = FSBService.getSubDirsFor(dir);
+
+            getDirInfo.then(function (d) {
+                $scope.fsDirs = d.data;
+                $scope.fsDrives = null;
+                $scope.currentPath = "Current path: " + dir.FullPath;
+                $scope.parentPath = (dir.FullPath).replace(dir.Name, "");
+                countFilesBySize();
+            }, function (error) {
+                console.log('Something is wrong with getting data from API');
+            });
+
+        };
+
+
+        $scope.dirsClick = function (dir) {
+            if (dir.IsDirectory) {
+                var getDirInfo = FSBService.getSubDirsFor(dir);
+                getDirInfo.then(function (d) {
+                    $scope.fsDirs = d.data;
+                    $scope.fsDrives = null;
+                    $scope.currentPath = "Current path: " + dir.FullPath;
+                    $scope.parentPath = (dir.FullPath).replace(dir.Name, "");
+                    countFilesBySize();
+                }, function (error) {
+                    console.log('Something is wrong with getting data from API');
+                });
+            }
+        };
+
+
+        function countFilesBySize() {
+            var lessThanTen = 0;
+            var notMoreFifty = 0;
+            var moreHandred = 0;
+            for (var i = 0; i < $scope.fsDirs.length; i++) {
+                var file = $scope.fsDirs[i];
+                if (!file.IsDirectory) {
+                    if (file.FileSize < 10 * 1024 * 1024) { lessThanTen++; }
+                    else if (file.FileSize <= 50 * 1024 * 1024) { notMoreFifty++; }
+                    else if (file.FileSize > 100 * 1024 * 1024) { moreHandred++; }
+                }
+            }
+            $scope.lessThanTen = lessThanTen;
+            $scope.notMoreFifty = notMoreFifty;
+            $scope.moreHandred = moreHandred;
+        };
+    });
+
+</script>

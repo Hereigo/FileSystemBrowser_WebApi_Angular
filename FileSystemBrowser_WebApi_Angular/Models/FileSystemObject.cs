@@ -16,23 +16,3 @@ namespace FileSystemBrowser_WebApi_Angular.Models
         public int MoreThan100 { get; set; }
     }
 }
-
-
-// Recursive measure files in SubDirs !!!
-
-//----------------------
-//IEnumerable<dirRecord> GetFromPath(httpGetData? )
-//-----------------------
-//GetForDrive(driveLetter )
-//GetForCurrDir(dir.Parent+dir.currName )
-//GetForParent(dir.Parent )
-//------------------------
-//List<dirRecord> =
-//{
-//isDirectory = true
-//parentPath = c:\program
-//currentName = Chrome
-//sizeContainedFilessizeA = 235438
-//sizeContainedFilessizeB
-//sizeContainedFilessizeC
-//}, {

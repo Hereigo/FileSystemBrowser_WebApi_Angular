@@ -35,6 +35,7 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
             return drivesList;
         }
 
+
         [Route("api/FSObjects/{drv}")]
         public IEnumerable<FileSystemObject> GetFromDrive(char drv)
         {
@@ -63,11 +64,11 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
                             Name = dir.Name,
                             ParentPath = Path.GetPathRoot(dir.FullName),
                             IsDirectory = true,
-                            FilesLess10 = (from f in files where f.Length <= (10 * 1024 * 1024) select f).Count(),
-                            NotMore50 = (from f in files
+                            FilesLess10 = (from f in containedFiles where f.Length <= (10 * 1024 * 1024) select f).Count(),
+                            NotMore50 = (from f in containedFiles
                                          where (f.Length > (10 * 1024 * 1024) && f.Length <= (50 * 1024 * 1024))
                                          select f).Count(),
-                            MoreThan100 = (from f in files where f.Length >= (100 * 1024 * 1024) select f).Count(),
+                            MoreThan100 = (from f in containedFiles where f.Length >= (100 * 1024 * 1024) select f).Count(),
                         });
                     }
                     catch (Exception)

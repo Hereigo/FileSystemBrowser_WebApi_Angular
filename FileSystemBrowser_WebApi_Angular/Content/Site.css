@@ -13,9 +13,34 @@
     text-align:center;
 }
 
+.drvLi {
+    list-style-type: none;
+}
+
+.drvBtn {
+    padding: 10px;
+    font-size:large;
+}
+
 /* Set width on the form input elements since they're 100% wide by default */
 input,
 select,
 textarea {
     max-width: 280px;
+}
+
+table {
+    margin: 10px auto;
+}
+
+#sizesTbl tr th {
+    border: solid 1px #B3B3B3;
+    background-color: #B3B3B3;
+    color: white;
+    padding: 5px;
+}
+
+#sizesTbl tr td {
+    border: solid 1px #B3B3B3;
+    padding: 10px;
 }
