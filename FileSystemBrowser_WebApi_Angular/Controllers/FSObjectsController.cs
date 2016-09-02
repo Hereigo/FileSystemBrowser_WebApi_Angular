@@ -24,7 +24,6 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
                 {
                     try
                     {
-                        
                         string[] filesPathes = Directory.GetFiles(dir.FullName, "*.*", SearchOption.AllDirectories);
 
                         List<FileInfo> containedFiles = new List<FileInfo>();
@@ -75,7 +74,7 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
             return dirsAndFiles;
         }
 
-        // GET api/values
+
         public IEnumerable<string> Get()
         {
             var drivesList = new List<string>();
@@ -111,42 +110,7 @@ namespace FileSystemBrowser_WebApi_Angular.Controllers
         [Route("api/FSObjects/{drv}/SubDirs")]
         public IEnumerable<FileSystemObject> SubDirs([FromBody]FileSystemObject dirObj)
         {
-            return GetInfo(dirObj.ParentPath + "\\" + dirObj.Name); //
-
-            // string rootDir = dirObj.;
-
-            //if (Directory.Exists(rootDir))
-            //{
-            //    DirectoryInfo[] dirs = new DirectoryInfo(rootDir).GetDirectories();
-            //    FileInfo[] files = new DirectoryInfo(rootDir).GetFiles();
-
-            //    foreach (DirectoryInfo dir in dirs)
-            //    {
-            //        dirsAndFiles.Add(new FileSystemObject
-            //        {
-            //            Name = dir.Name,
-            //            IsDirectory = true,
-            //            FullPath = dir.FullName
-            //        });
-            //    }
-            //    foreach (FileInfo file in files)
-            //    {
-            //        dirsAndFiles.Add(new FileSystemObject
-            //        {
-            //            Name = file.Name,
-            //            IsDirectory = false,
-            //            FileSize = file.Length,
-            //            FullPath = Path.GetPathRoot(file.FullName) // .FullName
-            //        });
-            //    }
-            //}
-
-            //if (dirsAndFiles.Count < 1)
-            //{
-            //    dirsAndFiles.Add(new FileSystemObject { Name = "Drive is not available or empty! " + rootDir });
-            //}
-
-            // return dirsAndFiles;
+            return GetInfo(dirObj.ParentPath + "\\" + dirObj.Name);
         }
     }
 }
